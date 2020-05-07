@@ -24,7 +24,7 @@ namespace ImageUpload
         public Form1()
         {
             InitializeComponent();
-            this.Text = "Image Uploader - v5.2";
+            this.Text = "Image Uploader - v5.1";
 
             //Get save location from file "config.txt"
             //System.IO.StreamReader file = new System.IO.StreamReader("c:\\Projects\\ImageUpload - V5.0\\bin\\Debug\\config.txt");
@@ -41,10 +41,7 @@ namespace ImageUpload
             string removeString = file.ReadLine();
             string[] removeArray = removeString.Split('=');
             Remove.Text = removeArray[1];
-
-            String ConfigLocation = Directory.GetCurrentDirectory();
-            this.Text += " : " + ConfigLocation;
-
+            
             file.Close();
 
 
@@ -57,8 +54,8 @@ namespace ImageUpload
         {
             openFileDialog2.Multiselect = true;
             openFileDialog2.Filter = "JPEG Images|*.jpg;*.JPG";
-
-            this.Cursor = Cursors.WaitCursor;
+            
+            this.Cursor = Cursors.WaitCursor;            
             if (openFileDialog2.ShowDialog() == DialogResult.OK)
             {
                 if (openFileDialog2.FileNames != null)
@@ -97,18 +94,16 @@ namespace ImageUpload
                 progressBar1.Maximum = ImageList.Count;
                 for (int i = 0; i < ImageList.Count; i++)
                 {
-                    DateTime CreatationTime = ImageList[i].FindImageCreation(ImageList[i].FileName);
-                    //DateTime CreatationTime = File.GetLastWriteTime(ImageList[i].FileName).Date;
-
-                    UniqueDates.Add(CreatationTime);
+                    DateTime CreatationTime = ImageList[i].ScaleImage(ImageList[i].FileName);
+                    UniqueDates.Add(ImageList[i].creationTime1);
                     textBox1.AppendText("Image Uploaded: " + ImageList[i].NameOfFile + "\r\n");
 
                     progressBar1.Value = i;
-                    int percent = (int)(((double)progressBar1.Value / (double)progressBar1.Maximum) * 100);
-                    progressBar1.CreateGraphics().DrawString(percent.ToString() + "%", new Font("Arial", (float)8.25, FontStyle.Regular), Brushes.Black, new PointF(progressBar1.Width / 2 - 10, progressBar1.Height / 2 - 7));
+                    int percent = (int)(((double)progressBar1.Value / (double)progressBar1.Maximum) * 100);  
+                    progressBar1.CreateGraphics().DrawString(percent.ToString() + "%", new Font("Arial", (float)8.25, FontStyle.Regular), Brushes.Black, new PointF(progressBar1.Width / 2 - 10, progressBar1.Height / 2 - 7)); 
                 }
                 progressBar1.Value = progressBar1.Maximum;
-                progressBar1.CreateGraphics().DrawString("Complete", new Font("Arial", (float)8.25, FontStyle.Regular), Brushes.Black, new PointF(progressBar1.Width / 2 - 10, progressBar1.Height / 2 - 7));
+                progressBar1.CreateGraphics().DrawString("Complete", new Font("Arial", (float)8.25, FontStyle.Regular), Brushes.Black, new PointF(progressBar1.Width / 2 - 10, progressBar1.Height / 2 - 7)); 
 
                 if (!checkBox3.Checked)
                     CreateHTMLPages();
@@ -194,7 +189,7 @@ namespace ImageUpload
             string FileString;
 
             DateTime dt = new DateTime(2000, 1, 1);
-
+            
             //Make copy of Files
             for (int i = 1; i++ <= 12; dt = dt.AddMonths(1))
             {
@@ -209,7 +204,7 @@ namespace ImageUpload
                         File.Copy(Path.Combine(sourceDir, MonthString + ".html"), FileString, true);
                         textBox1.AppendText("Replaced " + MonthString + "_" + DateString + ".html\r\n");
                     }
-                    else
+                    else 
                     {
                         textBox1.AppendText("Did NOT replace " + MonthString + "_" + DateString + ".html\r\n");
                     }
@@ -228,7 +223,7 @@ namespace ImageUpload
         void createHTML(List<ImageClass> nImageList, DateTime FileName, bool Exists)
         {
             String newString = "";
-
+            
             int index = SaveDirectory.Text.IndexOf(Remove.Text);
             string cleanPath = (index < 0)
                 ? SaveDirectory.Text
@@ -286,7 +281,7 @@ namespace ImageUpload
             }
             textBox1.AppendText("HTML Page Uploaded: " + StrFileName + "\r\n");
         }
-
+        
         // Clear the image list and start over
         private void button3_Click(object sender, EventArgs e)
         {
@@ -300,7 +295,7 @@ namespace ImageUpload
     //*************************************
     public class ImageClass
     {
-
+       
 
         public DateTime GetImageDate(Image Image)
         {
@@ -318,55 +313,53 @@ namespace ImageUpload
             }
             catch
             {
-//                creation = File.GetCreationTime(FileName);
                 creation = File.GetLastWriteTime(FileName);
             }
             return creation;
         }
 
-
-        public System.DateTime FindImageCreation(string FileName)
+      
+        public System.DateTime ScaleImage(string FileName)
         {
             //Image Image = Image.FromFile(FileName);
             //creationTime = GetImageDate(Image);
             //Image.Dispose();
-
             creationTime = File.GetLastWriteTime(FileName).Date;
             Exists = false;
             return creationTime;
         }
 
         public ImageClass(string FileName)
-        {
-            FileName = FileName.Replace(".jpg", ".JPG");
-            fileName = FileName;
-            nameOfFile = new FileInfo(FileName).Name;
-        }
-
-        private bool Exists;
-        public bool Exists1
-        {
-            get { return Exists; }
-            set { Exists = value; }
-        }
-
-        private string fileName;
-        public string FileName
-        {
-            get { return fileName; }
-        }
-
-        private DateTime creationTime;
-        public DateTime creationTime1
-        {
-            get { return creationTime; }
-        }
-
-        private string nameOfFile;
-        public string NameOfFile
-        {
-            get { return nameOfFile; }
-        }
-
+    {
+        FileName = FileName.Replace(".jpg", ".JPG");
+        fileName = FileName;
+        nameOfFile = new FileInfo(FileName).Name;
     }
+
+    private bool Exists;
+    public bool Exists1
+    {
+        get { return Exists; }
+        set { Exists = value; }
+    }
+
+    private string fileName;
+    public string FileName
+    {
+        get { return fileName; }
+    }
+
+    private DateTime creationTime;
+    public DateTime creationTime1
+    {
+        get { return creationTime; }
+    }
+
+    private string nameOfFile;
+    public string NameOfFile
+    {
+        get { return nameOfFile; }
+    }
+
+}
 }

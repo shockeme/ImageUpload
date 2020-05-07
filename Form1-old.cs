@@ -19,12 +19,14 @@ namespace ImageUpload
         protected Graphics myGraphics;
         List<ImageClass> ImageList = new List<ImageClass>();
         List<DateTime> UniqueDates = new List<DateTime>();
+        List<PictureBox> picBox1 = new List<PictureBox>();
         int ImagesLeft = 0;
 
         public Form1()
         {
             InitializeComponent();
-            this.Text = "Image Uploader - v5.2";
+            myGraphics = Graphics.FromHwnd(panel1.Handle);
+            this.Text = "Image Uploader - v5.1";
 
             //Get save location from file "config.txt"
             //System.IO.StreamReader file = new System.IO.StreamReader("c:\\Projects\\ImageUpload - V5.0\\bin\\Debug\\config.txt");
@@ -57,8 +59,8 @@ namespace ImageUpload
         {
             openFileDialog2.Multiselect = true;
             openFileDialog2.Filter = "JPEG Images|*.jpg;*.JPG";
-
-            this.Cursor = Cursors.WaitCursor;
+            
+            this.Cursor = Cursors.WaitCursor;            
             if (openFileDialog2.ShowDialog() == DialogResult.OK)
             {
                 if (openFileDialog2.FileNames != null)
@@ -75,6 +77,12 @@ namespace ImageUpload
                     {
                         ImageClass newImage = new ImageClass(openFileDialog2.FileNames[i]);
                         ImageList.Add(newImage);
+                        //picBox1.Add(new PictureBox());
+                        //picBox1[i].Image = ImageList[i].GetThumbnail(ImageList[i].FileName);
+                        //picBox1[i].Location = new System.Drawing.Point(12, (100 * i) + (i * 10) + 10);
+                        //picBox1[i].Name = i.ToString();
+                        //picBox1[i].Size = new System.Drawing.Size(picBox1[i].Image.Width, picBox1[i].Image.Height);
+                        //panel1.Controls.Add(picBox1[i]);
                     }
                 }
                 textBox1.AppendText("Done Loading.\r\n\r\n");
@@ -97,18 +105,22 @@ namespace ImageUpload
                 progressBar1.Maximum = ImageList.Count;
                 for (int i = 0; i < ImageList.Count; i++)
                 {
-                    DateTime CreatationTime = ImageList[i].FindImageCreation(ImageList[i].FileName);
-                    //DateTime CreatationTime = File.GetLastWriteTime(ImageList[i].FileName).Date;
+                    //Image Image = ImageList[i].ScaleImage(ImageList[i].FileName);
+                    UniqueDates.Add(ImageList[i].creationTime1.Date);
 
-                    UniqueDates.Add(CreatationTime);
+                    //if (ImageList[i].Rotated1 == 6)Image.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                    //if (ImageList[i].Rotated1 == 8)Image.RotateFlip(RotateFlipType.Rotate270FlipNone);
+
+                    //Image.Save(Drive.Text + SaveDirectory.Text + ImageList[i].NameOfFile, System.Drawing.Imaging.ImageFormat.Jpeg);
                     textBox1.AppendText("Image Uploaded: " + ImageList[i].NameOfFile + "\r\n");
 
                     progressBar1.Value = i;
-                    int percent = (int)(((double)progressBar1.Value / (double)progressBar1.Maximum) * 100);
-                    progressBar1.CreateGraphics().DrawString(percent.ToString() + "%", new Font("Arial", (float)8.25, FontStyle.Regular), Brushes.Black, new PointF(progressBar1.Width / 2 - 10, progressBar1.Height / 2 - 7));
+                    int percent = (int)(((double)progressBar1.Value / (double)progressBar1.Maximum) * 100);  
+                    progressBar1.CreateGraphics().DrawString(percent.ToString() + "%", new Font("Arial", (float)8.25, FontStyle.Regular), Brushes.Black, new PointF(progressBar1.Width / 2 - 10, progressBar1.Height / 2 - 7)); 
+                    //Image.Dispose();
                 }
                 progressBar1.Value = progressBar1.Maximum;
-                progressBar1.CreateGraphics().DrawString("Complete", new Font("Arial", (float)8.25, FontStyle.Regular), Brushes.Black, new PointF(progressBar1.Width / 2 - 10, progressBar1.Height / 2 - 7));
+                progressBar1.CreateGraphics().DrawString("Complete", new Font("Arial", (float)8.25, FontStyle.Regular), Brushes.Black, new PointF(progressBar1.Width / 2 - 10, progressBar1.Height / 2 - 7)); 
 
                 if (!checkBox3.Checked)
                     CreateHTMLPages();
@@ -194,7 +206,7 @@ namespace ImageUpload
             string FileString;
 
             DateTime dt = new DateTime(2000, 1, 1);
-
+            
             //Make copy of Files
             for (int i = 1; i++ <= 12; dt = dt.AddMonths(1))
             {
@@ -209,7 +221,7 @@ namespace ImageUpload
                         File.Copy(Path.Combine(sourceDir, MonthString + ".html"), FileString, true);
                         textBox1.AppendText("Replaced " + MonthString + "_" + DateString + ".html\r\n");
                     }
-                    else
+                    else 
                     {
                         textBox1.AppendText("Did NOT replace " + MonthString + "_" + DateString + ".html\r\n");
                     }
@@ -228,16 +240,17 @@ namespace ImageUpload
         void createHTML(List<ImageClass> nImageList, DateTime FileName, bool Exists)
         {
             String newString = "";
-
+            
             int index = SaveDirectory.Text.IndexOf(Remove.Text);
             string cleanPath = (index < 0)
                 ? SaveDirectory.Text
                 : SaveDirectory.Text.Remove(index, Remove.Text.Length);
-
+            
             for (int i = 0; i < nImageList.Count; i++)
             {
                 newString += "<a href='.." + cleanPath + nImageList[i].NameOfFile + "'>";
-                newString += "<img border='0' src='.." + cleanPath + nImageList[i].NameOfFile + "' width=100'height='70'></a>";
+//                newString += "<img border='0' src='.." + cleanPath + nImageList[i].NameOfFile + "' width='" + nImageList[i].Thumbnail1.Width + "' height='" + nImageList[i].Thumbnail1.Height + "'></a>";
+                newString += "<img border='0' src='.." + cleanPath + nImageList[i].NameOfFile + "' width='100' height='75'></a>";
             }
 
             String StrFileName = FileName.Year + "_" + FileName.Month + "_" + FileName.Day + ".html";
@@ -265,6 +278,7 @@ namespace ImageUpload
 
                 string v = s.Replace("</BODY>\r\n</HTML>", newString);
                 rdr.Close();
+                //File.Delete(Drive.Text + HTMLFiles.Text + StrFileName);
                 SW = File.CreateText(Drive.Text + HTMLFiles.Text + StrFileName);
                 SW.WriteLine(v);
                 SW.Close();
@@ -286,11 +300,12 @@ namespace ImageUpload
             }
             textBox1.AppendText("HTML Page Uploaded: " + StrFileName + "\r\n");
         }
-
+        
         // Clear the image list and start over
         private void button3_Click(object sender, EventArgs e)
         {
             ImageList.Clear();
+            panel1.Controls.Clear();
             progressBar1.Value = 0;
         }
     }
@@ -300,7 +315,32 @@ namespace ImageUpload
     //*************************************
     public class ImageClass
     {
+        public Image GetThumbnail(string FileName)
+        {
+            Image Image = Image.FromFile(FileName);
+            const double thumbSize = 100.0; // Longer dimension of thumbnails
+            int newWidth, newHeight;
+            
+            Rotated = GetOrientation(Image);
+            if (Rotated == 3) Image.RotateFlip(RotateFlipType.Rotate180FlipNone);
+            if (Rotated == 6) Image.RotateFlip(RotateFlipType.Rotate90FlipNone);
+            if (Rotated == 8) Image.RotateFlip(RotateFlipType.Rotate270FlipNone);
 
+            if (Image.Height > Image.Width)
+            {
+                newHeight = (int)thumbSize;
+                newWidth = (int)(Image.Width * thumbSize / Image.Height);
+            }
+            else
+            {
+                newWidth = (int)thumbSize;
+                newHeight = (int)(Image.Height * thumbSize / Image.Width);
+            } // end if
+
+            Thumbnail = Image.GetThumbnailImage(newWidth, newHeight, null, new System.IntPtr());
+            Image.Dispose();
+            return Thumbnail;
+        }
 
         public DateTime GetImageDate(Image Image)
         {
@@ -318,22 +358,116 @@ namespace ImageUpload
             }
             catch
             {
-//                creation = File.GetCreationTime(FileName);
-                creation = File.GetLastWriteTime(FileName);
+                creation = File.GetCreationTime(FileName);
             }
             return creation;
         }
 
-
-        public System.DateTime FindImageCreation(string FileName)
+        public int GetOrientation(Image image)
         {
-            //Image Image = Image.FromFile(FileName);
-            //creationTime = GetImageDate(Image);
-            //Image.Dispose();
+            try
+            {
+                PropertyItem propItem = image.GetPropertyItem(274);
+                int pv0 = BitConverter.ToInt16(propItem.Value, 0);
+                //if (pv0 == "1") return "Correct";
+                //if (pv0 == "6") return "Requires Rotation to the Right";
+                //if (pv0 == "8") return "Requires Rotation to the Left";
+                return pv0;
+            }
+            catch (Exception e)
+            {
+                if (e.GetType().ToString() != "System.ArgumentNullException")
+                {
+                }
+            }
+            return 0;
+        }
 
-            creationTime = File.GetLastWriteTime(FileName).Date;
+        public string GetManufacturer(Image Image)
+        {
+            try
+            {
+                PropertyItem propItem1 = Image.GetPropertyItem(0x10F);
+                return Encoding.UTF8.GetString(propItem1.Value).Trim();
+            }
+            catch
+            {
+                return "0";
+            }
+        }
+        
+        public Image ScaleImage(string FileName)
+        {
+            Image Image = Image.FromFile(FileName);
+            Bitmap bmp;
+            int newWidth=0, newHeight=0;
+            bool landscape = true;
+            String Camera = "";
+
+            creationTime = GetImageDate(Image);
+            string Manufacturer = GetManufacturer(Image);
+
+            if (Manufacturer.IndexOf("NIKON") == 0)
+                Camera = "Nikon";
+            else if (Manufacturer.IndexOf("Canon\0") == 0)
+                Camera = "Canon";
+            else if (Manufacturer.IndexOf("PENTAX") == 0)
+                Camera = "Pentax";
+            if (Image.Height > Image.Width)
+                landscape = false;
+
+            // 640 x 480 - Small Landscape (PENTAX) - 640x480
+            // 480 x 640 - Small (PENTAX) - 480x640
+            // 4288 x 2848 - Big Landscape (NIKON) 722x480
+            // 2848 x 4288 - Big (NIKON) - 480x722
+            // 4000 x 3000 - Big Landscape (Canon\0) - 640x480
+            // 3000 x 4000 - Big (Canon\0) - 480x640
+            switch (Camera)
+            {
+                case "Nikon":
+                    if (landscape == true)
+                    {
+                        newWidth = 722;
+                        newHeight = 480;
+                    }
+                    else
+                    {
+                        newWidth = 480;
+                        newHeight = 722;
+                    }
+                    break;
+                case "Pentax":
+                case "Canon":
+                default:
+                    if (landscape == true)
+                    {
+                        newWidth = 640;
+                        newHeight = 480;
+                    }
+                    else
+                    {
+                        newWidth = 480;
+                        newHeight = 640;
+                    }
+                    break;
+            }
+            bmp = new Bitmap(newWidth, newHeight);
+
+            ////create a new graphic from the Bitmap
+            Graphics graphic = Graphics.FromImage((Image)bmp);
+            graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
+
+            graphic.DrawImage(Image, 0, 0, newWidth, newHeight);
+
+            ////dispose and free up the resources
+            graphic.Dispose();
+            Image.Dispose();
+
+            ////set the image
+            //SmallImage = (Image)bmp;
             Exists = false;
-            return creationTime;
+            return bmp;
+
         }
 
         public ImageClass(string FileName)
@@ -347,13 +481,20 @@ namespace ImageUpload
         public bool Exists1
         {
             get { return Exists; }
-            set { Exists = value; }
+            set {Exists = value; }
         }
 
         private string fileName;
         public string FileName
         {
             get { return fileName; }
+        }
+        
+        private int Rotated = 0;
+        public int Rotated1
+        {
+            set { Rotated = value; }
+            get { return Rotated; }
         }
 
         private DateTime creationTime;
@@ -368,5 +509,10 @@ namespace ImageUpload
             get { return nameOfFile; }
         }
 
+        private Image Thumbnail;
+        public Image Thumbnail1
+        {
+            get { return Thumbnail; }
+        }        
     }
 }
