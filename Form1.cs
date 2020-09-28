@@ -297,6 +297,8 @@ namespace ImageUpload
         // Clear the image list and start over
         private void button3_Click(object sender, EventArgs e)
         {
+            textBox1.Clear();
+            textBox1.Text = "Last Image uploaded = " + ImageList[ImageList.Count-1].NameOfFile;
             ImageList.Clear();
             progressBar1.Value = 0;
         }
