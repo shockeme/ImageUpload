@@ -98,10 +98,11 @@ namespace ImageUpload
                 for (int i = 0; i < ImageList.Count; i++)
                 {
                     // DateTime CreatationTime = ImageList[i].FindImageCreation(ImageList[i].FileName);
-                    DateTime CreatationTime = File.GetLastWriteTime(ImageList[i].FileName).Date;
+                    // DateTime CreatationTime = File.GetLastWriteTime(ImageList[i].FileName).Date;
+                    DateTime CreatationTime = ImageList[i].FindImageCreation(ImageList[i].FileName);
 
                     Image Image = ImageList[i].ScaleImage(ImageList[i].FileName);
-                    UniqueDates.Add(CreatationTime);
+                    UniqueDates.Add(CreatationTime.Date);
                     Image.Save(Drive.Text + SaveDirectory.Text + ImageList[i].NameOfFile, System.Drawing.Imaging.ImageFormat.Jpeg);
                     textBox1.AppendText("Image Uploaded: " + ImageList[i].NameOfFile + "\r\n");
 
@@ -138,7 +139,7 @@ namespace ImageUpload
             {
                 for (int j = 0; j < ImageList.Count; j++)
                 {
-                    if (ImageList[j].creationTime1.Date == NewList[i])
+                    if (ImageList[j].creationTime1.Date == NewList[i].Date)
                         IList1.Add(ImageList[j]);
                 }
                 Exists.Add(false);
@@ -324,12 +325,10 @@ namespace ImageUpload
     //*************************************
     public class ImageClass
     {
-
-
         public DateTime GetImageDate(Image Image)
         {
             DateTime creation;
-            /*try
+            try
             {
                 //Convert date taken from metadata to a DateTime object 
                 PropertyItem propItem = Image.GetPropertyItem(306);
@@ -341,10 +340,10 @@ namespace ImageUpload
                 creation = DateTime.Parse(sdate);
             }
             catch
-            {*/
-//                creation = File.GetCreationTime(FileName);
-                creation = File.GetLastWriteTime(FileName);
-            //}
+            {
+                creation = File.GetCreationTime(FileName);
+                //creation = File.GetLastWriteTime(FileName);
+            }
             return creation;
         }
 
@@ -379,23 +378,29 @@ namespace ImageUpload
                 Camera = "Canon";
             else if (Manufacturer.IndexOf("PENTAX") == 0)
                 Camera = "Pentax";
+            try
+            {
+                var prop = Image.GetPropertyItem(0x112);
+                int val = BitConverter.ToUInt16(prop.Value, 0);
+                var rot = RotateFlipType.RotateNoneFlipNone;
 
-            var prop = Image.GetPropertyItem(0x112);
-            int val = BitConverter.ToUInt16(prop.Value, 0);
-            var rot = RotateFlipType.RotateNoneFlipNone;
+                if (val == 3 || val == 4)
+                    rot = RotateFlipType.Rotate180FlipNone;
+                else if (val == 5 || val == 6)
+                    rot = RotateFlipType.Rotate90FlipNone;
+                else if (val == 7 || val == 8)
+                    rot = RotateFlipType.Rotate270FlipNone;
 
-            if (val == 3 || val == 4)
-                rot = RotateFlipType.Rotate180FlipNone;
-            else if (val == 5 || val == 6)
-                rot = RotateFlipType.Rotate90FlipNone;
-            else if (val == 7 || val == 8)
-                rot = RotateFlipType.Rotate270FlipNone;
+                if (val == 2 || val == 4 || val == 5 || val == 7)
+                    rot |= RotateFlipType.RotateNoneFlipX;
 
-            if (val == 2 || val == 4 || val == 5 || val == 7)
-                rot |= RotateFlipType.RotateNoneFlipX;
+                if (rot != RotateFlipType.RotateNoneFlipNone)
+                    Image.RotateFlip(rot);
+            }
+            catch
+            {
 
-            if (rot != RotateFlipType.RotateNoneFlipNone)
-                Image.RotateFlip(rot);
+            }
 
             if (Image.Height > Image.Width)
                 landscape = false;
@@ -458,13 +463,15 @@ namespace ImageUpload
 
         public System.DateTime FindImageCreation(string FileName)
         {
-            //Image Image = Image.FromFile(FileName);
-            //creationTime = GetImageDate(Image);
-            //Image.Dispose();
-
-            creationTime = File.GetLastWriteTime(FileName).Date;
+            Image Image = Image.FromFile(FileName);
+            creationTime = GetImageDate(Image);
+            Image.Dispose();
             Exists = false;
             return creationTime;
+
+            //creationTime = File.GetLastWriteTime(FileName).Date;
+            //Exists = false;
+            //return creationTime;
         }
 
         public ImageClass(string FileName)
