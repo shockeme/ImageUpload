@@ -97,8 +97,8 @@ namespace ImageUpload
                 progressBar1.Maximum = ImageList.Count;
                 for (int i = 0; i < ImageList.Count; i++)
                 {
-                    DateTime CreatationTime = ImageList[i].FindImageCreation(ImageList[i].FileName);
-                    //DateTime CreatationTime = File.GetLastWriteTime(ImageList[i].FileName).Date;
+                    // DateTime CreatationTime = ImageList[i].FindImageCreation(ImageList[i].FileName);
+                    DateTime CreatationTime = File.GetLastWriteTime(ImageList[i].FileName).Date;
 
                     Image Image = ImageList[i].ScaleImage(ImageList[i].FileName);
                     UniqueDates.Add(CreatationTime);
@@ -178,7 +178,22 @@ namespace ImageUpload
                         String DriveString = Drive.Text + Remove.Text + "/" + NewList[i].ToString("MMMM") + ".html";
                         String newString = "<br></font><a href='Days/" + NewList[i].Year + "_" + NewList[i].Month + "_" + NewList[i].Day + ".html'>Pictures</a>";
                         String dayString = "  " + NewList[i].Day + Environment.NewLine;
-                        File.AppendAllText(DriveString, newString + dayString);
+
+                        string text = File.ReadAllText(DriveString);
+                        text = File.ReadAllText(DriveString);
+                        
+                        
+                        string OldText = "<!-- Date Tag -->" + NewList[i].Day + "<"; 
+                        string NewText = "<!-- Date Tag -->" + NewList[i].Day + "<br><a href='Days/" + NewList[i].Year + "_" + NewList[i].Month + "_" + NewList[i].Day + ".html'>Pictures</a><";
+
+                        // see if the file already has the Pictures link for that day.                        
+
+                        if (text.IndexOf(NewText) < 0) { 
+                            text = text.Replace(OldText, NewText);
+                            File.WriteAllText(DriveString, text);
+                        }
+
+                        //File.AppendAllText(DriveString, newString + dayString);
                         textBox1.AppendText("Added Link for Day: " + NewList[i].Day + " to " + NewList[i].ToString("MMMM") + ".html\r\n");
                     }
                 }
@@ -314,7 +329,7 @@ namespace ImageUpload
         public DateTime GetImageDate(Image Image)
         {
             DateTime creation;
-            try
+            /*try
             {
                 //Convert date taken from metadata to a DateTime object 
                 PropertyItem propItem = Image.GetPropertyItem(306);
@@ -326,10 +341,10 @@ namespace ImageUpload
                 creation = DateTime.Parse(sdate);
             }
             catch
-            {
+            {*/
 //                creation = File.GetCreationTime(FileName);
                 creation = File.GetLastWriteTime(FileName);
-            }
+            //}
             return creation;
         }
 
@@ -349,11 +364,12 @@ namespace ImageUpload
         public Image ScaleImage(string FileName)
         {
             Image Image = Image.FromFile(FileName);
+            
             Bitmap bmp;
             int newWidth = 0, newHeight = 0;
             bool landscape = true;
             String Camera = "";
-
+            
             creationTime = GetImageDate(Image);
             string Manufacturer = GetManufacturer(Image);
 
@@ -363,6 +379,24 @@ namespace ImageUpload
                 Camera = "Canon";
             else if (Manufacturer.IndexOf("PENTAX") == 0)
                 Camera = "Pentax";
+
+            var prop = Image.GetPropertyItem(0x112);
+            int val = BitConverter.ToUInt16(prop.Value, 0);
+            var rot = RotateFlipType.RotateNoneFlipNone;
+
+            if (val == 3 || val == 4)
+                rot = RotateFlipType.Rotate180FlipNone;
+            else if (val == 5 || val == 6)
+                rot = RotateFlipType.Rotate90FlipNone;
+            else if (val == 7 || val == 8)
+                rot = RotateFlipType.Rotate270FlipNone;
+
+            if (val == 2 || val == 4 || val == 5 || val == 7)
+                rot |= RotateFlipType.RotateNoneFlipX;
+
+            if (rot != RotateFlipType.RotateNoneFlipNone)
+                Image.RotateFlip(rot);
+
             if (Image.Height > Image.Width)
                 landscape = false;
 
@@ -406,7 +440,6 @@ namespace ImageUpload
             ////create a new graphic from the Bitmap
             Graphics graphic = Graphics.FromImage((Image)bmp);
             graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
-
             graphic.DrawImage(Image, 0, 0, newWidth, newHeight);
 
             ////dispose and free up the resources
@@ -418,7 +451,6 @@ namespace ImageUpload
                 ((IDisposable)graphic).Dispose();
 
             ////set the image
-            //SmallImage = (Image)bmp;
             Exists = false;
             return bmp;
 
