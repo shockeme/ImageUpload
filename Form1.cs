@@ -142,10 +142,10 @@ namespace ImageUpload
                 IList1.Clear();
             }
 
-            if (checkBox2.Checked)
+            if (checkBox2.Checked) // backup pages
             {
                 // Append Date to filename and save months
-                textBox1.AppendText("\r\nSaving Monthly pages:\r\n");
+                textBox1.AppendText("\r\nBackup Monthly pages:\r\n");
                 SavePages();
             }
 
@@ -173,22 +173,20 @@ namespace ImageUpload
                     if (!Exists[i])
                     {
                         String DriveString = Drive.Text + Remove.Text + "/" + NewList[i].ToString("MMMM") + ".html";
-                        String newString = "<br></font><a href='Days/" + NewList[i].Year + "_" + NewList[i].Month + "_" + NewList[i].Day + ".html'>Pictures</a>";
-                        String dayString = "  " + NewList[i].Day + Environment.NewLine;
+                        //String newString = "<br></font><a href='Days/" + NewList[i].Year + "_" + NewList[i].Month + "_" + NewList[i].Day + ".html'>Pictures</a>";
+                        //String dayString = "  " + NewList[i].Day + Environment.NewLine;
 
                         string text = File.ReadAllText(DriveString);
-                        text = File.ReadAllText(DriveString);
                         
-                        // Start Here for changing text in file
+                        // <------   Start Here for changing text in file
                         string OldText = "<!-- Date Tag -->" + NewList[i].Day + "<"; 
                         string NewText = "<!-- Date Tag -->" + NewList[i].Day + "<br><a href='Days/" + NewList[i].Year + "_" + NewList[i].Month + "_" + NewList[i].Day + ".html'>Pictures</a><";
 
-                        // see if the file already has the Pictures link for that day.                        
                         if (text.IndexOf(NewText) < 0) { 
                             text = text.Replace(OldText, NewText);
                             File.WriteAllText(DriveString, text);
                         }
-                        // End Here for changing text in file
+                        // <-------  End Here for changing text in file
 
                         //File.AppendAllText(DriveString, newString + dayString);
                         textBox1.AppendText("Added Link for Day: " + NewList[i].Day + " to " + NewList[i].ToString("MMMM") + ".html\r\n");
@@ -202,15 +200,17 @@ namespace ImageUpload
         }
 
         //*************************************
-        // Add links to Monthly HTML pages
+        // Add pages to backup directory
         //*************************************
         void SavePages()
         {
             string sourceDir = Drive.Text + Remove.Text + "/";
             string backupDir = Drive.Text + Remove.Text + "/backup/";
-            string DateString = DateTime.Today.Day + "_" + DateTime.Today.Year;
+            string DateString = DateTime.Today.Month + "_" + DateTime.Today.Day + "_" + DateTime.Today.Year;
             string MonthString;
             string FileString;
+            bool first = true;
+            string dResult = "yes";
 
             DateTime dt = new DateTime(2000, 1, 1);
 
@@ -222,8 +222,13 @@ namespace ImageUpload
 
                 if (File.Exists(FileString))
                 {
-                    DialogResult dialogResult = MessageBox.Show(MonthString + "_" + DateString + ".html Exists!! Do you want to overwrite the file?", "File Exists!", MessageBoxButtons.YesNo);
-                    if (dialogResult == DialogResult.Yes)
+                    if (first == true)
+                    {
+                        DialogResult dialogResult = MessageBox.Show(MonthString + "_" + DateString + ".html Exists!! Do you want to overwrite the file?", "File Exists!", MessageBoxButtons.YesNo);
+                        dResult = dialogResult.ToString();
+                        first = false;
+                    }
+                    if (dResult == "Yes")
                     {
                         File.Copy(Path.Combine(sourceDir, MonthString + ".html"), FileString, true);
                         textBox1.AppendText("Replaced " + MonthString + "_" + DateString + ".html\r\n");
