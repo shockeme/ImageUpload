@@ -67,9 +67,11 @@ namespace ImageUpload
                     FileInfo endfile = new FileInfo(openFileDialog2.FileNames.Last());
 
                     ImagesLeft = openFileDialog2.FileNames.Count();
-                    label4.Text = ImagesLeft + " images loaded";
-                    textBox1.AppendText("Loading Files " + startfile.Name + " to " + endfile.Name + "\r\n");
-                    textBox1.AppendText(ImagesLeft + " total files\r\n");
+                    label4.Text = "Loading Images...";
+                    label4.Refresh();
+
+                    textBox1.AppendText("Loading " + ImagesLeft + " Total Files: \r\n" + startfile.Name + " to " + endfile.Name + "\r\n");
+                    Cursor.Current = Cursors.WaitCursor;
 
                     for (int i = 0; i < openFileDialog2.FileNames.Length; i++)
                     {
@@ -77,7 +79,9 @@ namespace ImageUpload
                         ImageList.Add(newImage);
                     }
                 }
+                label4.Text = ImagesLeft + " images loaded";
                 textBox1.AppendText("Done Loading.\r\n\r\n");
+                Cursor.Current = Cursors.Default;
             }
             this.Cursor = Cursors.Default;
         }
@@ -90,33 +94,24 @@ namespace ImageUpload
             if (Directory.Exists(Drive.Text))
             {
                 this.Cursor = Cursors.WaitCursor;
+                label4.Text = "Saving Images...";
+                label4.Refresh();
 
                 textBox1.AppendText("\r\nUploading Image files:\r\n");
-                progressBar1.Value = 0;
-                progressBar1.Minimum = 0;
-                progressBar1.Maximum = ImageList.Count;
                 for (int i = 0; i < ImageList.Count; i++)
                 {
-                    // DateTime CreatationTime = ImageList[i].FindImageCreation(ImageList[i].FileName);
-                    // DateTime CreatationTime = File.GetLastWriteTime(ImageList[i].FileName).Date;
-                    DateTime CreatationTime = ImageList[i].FindImageCreation(ImageList[i].FileName);
+                    UniqueDates.Add(ImageList[i].creationTime1.Date);
 
                     Image Image = ImageList[i].ScaleImage(ImageList[i].FileName);
-                    UniqueDates.Add(CreatationTime.Date);
                     Image.Save(Drive.Text + SaveDirectory.Text + ImageList[i].NameOfFile, System.Drawing.Imaging.ImageFormat.Jpeg);
-                    textBox1.AppendText("Image Uploaded: " + ImageList[i].NameOfFile + "\r\n");
+                    textBox1.AppendText("Image Uploaded: " + ImageList[i].NameOfFile + " (" + (i+1) + " of " + ImageList.Count + ")\r\n");
 
-                    progressBar1.Value = i;
-                    int percent = (int)(((double)progressBar1.Value / (double)progressBar1.Maximum) * 100);
-                    progressBar1.CreateGraphics().DrawString(percent.ToString() + "%", new Font("Arial", (float)8.25, FontStyle.Regular), Brushes.Black, new PointF(progressBar1.Width / 2 - 10, progressBar1.Height / 2 - 7));
                     Image.Dispose();
                     //Release resources from old image
                     if (Image != null)
                         ((IDisposable)Image).Dispose();
 
                 }
-                progressBar1.Value = progressBar1.Maximum;
-                progressBar1.CreateGraphics().DrawString("Complete", new Font("Arial", (float)8.25, FontStyle.Regular), Brushes.Black, new PointF(progressBar1.Width / 2 - 10, progressBar1.Height / 2 - 7));
 
                 if (!checkBox3.Checked)
                     CreateHTMLPages();
@@ -135,7 +130,7 @@ namespace ImageUpload
             List<DateTime> NewList = Unique.ToList();
             List<ImageClass> IList1 = new List<ImageClass>();
 
-            for (int i = 0; i < Unique.Count(); i++)
+            for (int i = 0; i < NewList.Count(); i++)
             {
                 for (int j = 0; j < ImageList.Count; j++)
                 {
@@ -162,7 +157,8 @@ namespace ImageUpload
             }
             UniqueDates.Clear();
             textBox1.AppendText("\r\nUpload Done.\r\n\r\n\r\n");
-
+            label4.Text = "Done.";
+            label4.Refresh();
         }
 
         //*************************************
@@ -183,16 +179,16 @@ namespace ImageUpload
                         string text = File.ReadAllText(DriveString);
                         text = File.ReadAllText(DriveString);
                         
-                        
+                        // Start Here for changing text in file
                         string OldText = "<!-- Date Tag -->" + NewList[i].Day + "<"; 
                         string NewText = "<!-- Date Tag -->" + NewList[i].Day + "<br><a href='Days/" + NewList[i].Year + "_" + NewList[i].Month + "_" + NewList[i].Day + ".html'>Pictures</a><";
 
                         // see if the file already has the Pictures link for that day.                        
-
                         if (text.IndexOf(NewText) < 0) { 
                             text = text.Replace(OldText, NewText);
                             File.WriteAllText(DriveString, text);
                         }
+                        // End Here for changing text in file
 
                         //File.AppendAllText(DriveString, newString + dayString);
                         textBox1.AppendText("Added Link for Day: " + NewList[i].Day + " to " + NewList[i].ToString("MMMM") + ".html\r\n");
@@ -314,9 +310,14 @@ namespace ImageUpload
         private void button3_Click(object sender, EventArgs e)
         {
             textBox1.Clear();
-            textBox1.Text = "Last Image uploaded = " + ImageList[ImageList.Count-1].NameOfFile;
-            ImageList.Clear();
-            progressBar1.Value = 0;
+            try
+            {
+                textBox1.Text = "Last Image uploaded = " + ImageList[ImageList.Count - 1].NameOfFile;
+                ImageList.Clear();
+            }
+            catch 
+            { 
+            }
         }
     }
 
@@ -479,6 +480,7 @@ namespace ImageUpload
             FileName = FileName.Replace(".jpg", ".JPG");
             fileName = FileName;
             nameOfFile = new FileInfo(FileName).Name;
+            creationTime = FindImageCreation(FileName);
         }
 
         private bool Exists;
