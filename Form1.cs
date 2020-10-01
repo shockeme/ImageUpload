@@ -20,7 +20,7 @@ namespace ImageUpload
         public Form1()
         {
             InitializeComponent();
-            this.Text = "Image Uploader - v5.2";
+            this.Text = "Image Uploader - v6.0";
 
             //Get save location from file "config.txt"
             System.IO.StreamReader file = new System.IO.StreamReader("config.txt");
