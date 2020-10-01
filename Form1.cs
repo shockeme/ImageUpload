@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
@@ -9,8 +7,6 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Windows.Forms;
-using System.Net;
-using System.Threading;
 
 namespace ImageUpload
 {
@@ -27,7 +23,6 @@ namespace ImageUpload
             this.Text = "Image Uploader - v5.2";
 
             //Get save location from file "config.txt"
-            //System.IO.StreamReader file = new System.IO.StreamReader("c:\\Projects\\ImageUpload - V5.0\\bin\\Debug\\config.txt");
             System.IO.StreamReader file = new System.IO.StreamReader("config.txt");
             string DriveLetter = file.ReadLine();
             string[] DriveArray = DriveLetter.Split('=');
@@ -46,8 +41,6 @@ namespace ImageUpload
             this.Text += " : " + ConfigLocation;
 
             file.Close();
-
-
         }
 
         //*************************
@@ -110,10 +103,9 @@ namespace ImageUpload
                     //Release resources from old image
                     if (Image != null)
                         ((IDisposable)Image).Dispose();
-
                 }
 
-                if (!checkBox3.Checked)
+                if (!checkBox3.Checked) // Create the HTML pages if selected
                     CreateHTMLPages();
                 this.Cursor = Cursors.Default;
             }
@@ -124,7 +116,7 @@ namespace ImageUpload
         {
             textBox1.AppendText("\r\nUploading HTML files:\r\n");
 
-            // create date buckets for daily web page entries.
+            // create unique date buckets for daily web page entries.
             IEnumerable<DateTime> Unique = UniqueDates.Distinct();
             List<bool> Exists = new List<bool>();
             List<DateTime> NewList = Unique.ToList();
@@ -142,14 +134,14 @@ namespace ImageUpload
                 IList1.Clear();
             }
 
-            if (checkBox2.Checked) // backup pages
+            if (checkBox2.Checked) // backup pages if selected
             {
                 // Append Date to filename and save months
                 textBox1.AppendText("\r\nBackup Monthly pages:\r\n");
                 SavePages();
             }
 
-            if (checkBox1.Checked)
+            if (checkBox1.Checked) // add links to Monthly pages if selected
             {
                 // Add links to HTML pages
                 textBox1.AppendText("\r\nAdding Tags to Monthly HTML files:\r\n");
@@ -173,6 +165,7 @@ namespace ImageUpload
                     if (!Exists[i])
                     {
                         String DriveString = Drive.Text + Remove.Text + "/" + NewList[i].ToString("MMMM") + ".html";
+                        // Needed if appending to existing file
                         //String newString = "<br></font><a href='Days/" + NewList[i].Year + "_" + NewList[i].Month + "_" + NewList[i].Day + ".html'>Pictures</a>";
                         //String dayString = "  " + NewList[i].Day + Environment.NewLine;
 
@@ -188,7 +181,34 @@ namespace ImageUpload
                         }
                         // <-------  End Here for changing text in file
 
+                        // Needed if appending to existing file
                         //File.AppendAllText(DriveString, newString + dayString);
+                        textBox1.AppendText("Added Link for Day: " + NewList[i].Day + " to " + NewList[i].ToString("MMMM") + ".html\r\n");
+                    }
+                }
+                catch
+                {
+                    continue;
+                }
+            }
+        }
+
+        //*************************************
+        // Append links to Monthly HTML pages
+        //*************************************
+        void AppendLinks(List<DateTime> NewList, List<bool> Exists)
+        {
+            for (int i = 0; i < NewList.Count; i++)
+            {
+                try
+                {
+                    if (!Exists[i])
+                    {
+                        String DriveString = Drive.Text + Remove.Text + "/" + NewList[i].ToString("MMMM") + ".html";
+                        String newString = "<br></font><a href='Days/" + NewList[i].Year + "_" + NewList[i].Month + "_" + NewList[i].Day + ".html'>Pictures</a>";
+                        String dayString = "  " + NewList[i].Day + Environment.NewLine;
+                        string text = File.ReadAllText(DriveString);
+                        File.AppendAllText(DriveString, newString + dayString);
                         textBox1.AppendText("Added Link for Day: " + NewList[i].Day + " to " + NewList[i].ToString("MMMM") + ".html\r\n");
                     }
                 }
@@ -237,7 +257,6 @@ namespace ImageUpload
                     {
                         textBox1.AppendText("Did NOT replace " + MonthString + "_" + DateString + ".html\r\n");
                     }
-
                 }
                 else
                     File.Copy(Path.Combine(sourceDir, MonthString + ".html"), FileString);
@@ -461,7 +480,6 @@ namespace ImageUpload
             if (graphic != null)
                 ((IDisposable)graphic).Dispose();
 
-            ////set the image
             Exists = false;
             return bmp;
 
@@ -474,10 +492,6 @@ namespace ImageUpload
             Image.Dispose();
             Exists = false;
             return creationTime;
-
-            //creationTime = File.GetLastWriteTime(FileName).Date;
-            //Exists = false;
-            //return creationTime;
         }
 
         public ImageClass(string FileName)
